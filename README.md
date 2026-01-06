@@ -1,1 +1,2 @@
 # AI-Productivity-Analysis
+It’s a personal “productivity dashboard” that automatically collects your work activity from places like GitHub (and optionally others like Jira, Google Calendar, Slack, etc.), saves it in a database, and then shows insights and trends. 
