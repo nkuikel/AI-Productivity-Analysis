@@ -3,6 +3,7 @@ uvicorn[standard]
 SQLAlchemy
 psycopg2-binary
 pydantic
+pydantic-settings
 requests
 pytest
 ruff
