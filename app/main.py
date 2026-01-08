@@ -4,6 +4,7 @@ from app.routers import health
 from app.routers import users
 from app.routers import ingest
 from app.routers import analytics
+from app.routers import focus
 from app.db import Base, engine
 from app import models  # noqa: F401
 
@@ -13,9 +14,14 @@ app.include_router(health.router)
 app.include_router(users.router)
 app.include_router(ingest.router)
 app.include_router(analytics.router)
+app.include_router(focus.router)
 
 
 
 @app.on_event("startup")
 def on_startup() -> None:
     Base.metadata.create_all(bind=engine)
+
+@app.get("/debug/routes")
+def debug_routes():
+    return sorted([r.path for r in app.routes])
