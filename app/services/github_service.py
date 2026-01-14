@@ -27,6 +27,7 @@ def ingest_recent_github_events(
 ) -> int:
     """
     Fetch recent public GitHub events for a username and store them as ActivityEvent rows.
+    Idempotent: skips events already stored based on (source, external_id).
     Returns number of inserted rows.
     """
     url = f"https://api.github.com/users/{github_username}/events/public"
@@ -46,15 +47,30 @@ def ingest_recent_github_events(
         raise ValueError(f"GitHub user '{github_username}' not found")
     resp.raise_for_status()
 
-    events: list[dict[str, Any]] = resp.json()
-    events = events[:limit]
+    events: list[dict[str, Any]] = resp.json()[:limit]
 
     inserted = 0
     for e in events:
+        external_id = str(e.get("id", "")).strip()
+        if not external_id:
+            # If GitHub ever returns an event without an id, skip it
+            continue
+
+        # Skip duplicates (idempotent ingestion)
+        exists = (
+            db.query(ActivityEvent.id)
+            .filter(ActivityEvent.source == "github")
+            .filter(ActivityEvent.external_id == external_id)
+            .first()
+        )
+        if exists:
+            continue
+
         activity = ActivityEvent(
             user_id=user_id,
             event_type=e.get("type", "unknown"),
             source="github",
+            external_id=external_id,
             occurred_at=_parse_github_datetime(e.get("created_at")),
             metadata_json=json.dumps(e),
         )

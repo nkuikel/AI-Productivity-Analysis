@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import UniqueConstraint
 
 from app.db import Base
 
@@ -55,6 +56,10 @@ class ActivityEvent(Base):
     Raw activity stream.
     Examples: GitHub push, PR, issue, app usage event, website visit, etc.
     """
+    __table_args__ = (
+    UniqueConstraint("source", "external_id", name="uq_activity_events_source_external_id"),
+)
+
 
     __tablename__ = "activity_events"
 
@@ -71,6 +76,8 @@ class ActivityEvent(Base):
 
     # e.g. "github"
     source: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    external_id = Column(String, nullable=False)
 
     occurred_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
