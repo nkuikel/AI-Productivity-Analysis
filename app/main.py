@@ -5,6 +5,7 @@ from app.routers import users
 from app.routers import ingest
 from app.routers import analytics
 from app.routers import focus
+from app.routers import jobs
 from app.db import Base, engine
 from app import models  # noqa: F401
 
@@ -15,8 +16,7 @@ app.include_router(users.router)
 app.include_router(ingest.router)
 app.include_router(analytics.router)
 app.include_router(focus.router)
-
-
+app.include_router(jobs.router)
 
 @app.on_event("startup")
 def on_startup() -> None:

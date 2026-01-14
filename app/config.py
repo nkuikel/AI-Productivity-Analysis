@@ -7,6 +7,8 @@ class Settings(BaseSettings):
 
     GITHUB_TOKEN: str | None = None #placeholder for future Github API Integration
 
+    JOB_SECRET: str | None = None
+
     class Config:
         env_file = ".env"
 

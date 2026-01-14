@@ -1,0 +1,17 @@
+name: Nightly Refresh
+
+on:
+  schedule:
+    # Runs every night at 02:00 UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  nightly-refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call nightly refresh endpoint
+        run: |
+          curl -sS -X POST "https://<your-api>.onrender.com/jobs/nightly-refresh" \
+            -H "X-Job-Secret: ${{ secrets.JOB_SECRET }}" \
+            -H "Accept: application/json"
