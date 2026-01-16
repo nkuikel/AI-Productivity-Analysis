@@ -1,17 +1,45 @@
+# .github/workflows/nightly.yml
 name: Nightly Refresh
 
+# Run nightly + allow manual runs
 on:
   schedule:
-    # Runs every night at 02:00 UTC
-    - cron: "0 2 * * *"
-  workflow_dispatch: {}
+    - cron: "0 5 * * *"   # daily at 05:00 UTC — adjust if you want a different time
+  workflow_dispatch:
 
 jobs:
-  nightly-refresh:
+  call-nightly-endpoint:
     runs-on: ubuntu-latest
     steps:
-      - name: Call nightly refresh endpoint
+      - name: Call nightly-refresh endpoint
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          JOB_SECRET: ${{ secrets.JOB_SECRET }}
         run: |
-          curl -sS -X POST "https://<your-api>.onrender.com/jobs/nightly-refresh" \
-            -H "X-Job-Secret: ${{ secrets.JOB_SECRET }}" \
-            -H "Accept: application/json"
+          set -euo pipefail
+
+          if [ -z "${API_BASE_URL:-}" ]; then
+            echo "Missing API_BASE_URL secret. Aborting."
+            exit 1
+          fi
+          if [ -z "${JOB_SECRET:-}" ]; then
+            echo "Missing JOB_SECRET secret. Aborting."
+            exit 1
+          fi
+
+          echo "Calling $API_BASE_URL/jobs/nightly-refresh"
+          HTTP_STATUS=$(curl -s -o /tmp/resp.txt -w "%{http_code}" -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Job-Secret: $JOB_SECRET" \
+            "$API_BASE_URL/jobs/nightly-refresh" || true)
+
+          echo "HTTP status: $HTTP_STATUS"
+          echo "Response body:"
+          sed -n '1,200p' /tmp/resp.txt || true
+
+          if [ "$HTTP_STATUS" -ge 400 ]; then
+            echo "Nightly job returned failure (status $HTTP_STATUS)"
+            exit 1
+          fi
+
+          echo "Nightly call succeeded."
